@@ -38,19 +38,23 @@ See the full specification: **[semantic-field-types.md](./semantic-field-types.m
 # In your data catalog or dbt schema.yml
 columns:
   - name: transport_id
-    semantic_type: identifier.primary
-    
+    meta:
+      semantic_type: identifier.primary
+
   - name: delivery_date
-    semantic_type: temporal.deadline
-    
+    meta:
+      semantic_type: temporal.deadline
+
   - name: driver_name
-    semantic_type: personal.natural_person_name
-    pii_classification: pii
-    
+    meta:
+      semantic_type: personal.natural_person_name
+      pii_classification: pii
+
   - name: total_cost_eur
+    meta:
     semantic_type: numeric.currency_amount
-    properties:
-      currency: EUR
+      properties:
+        currency: EUR
 ```
 
 ## Core Principles
@@ -73,9 +77,9 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 
 This taxonomy is designed to complement existing standards:
 
+- [Open Semantic Interchange (OSI)](https://github.com/open-semantic-interchange/OSI) - Semantic layer interoperability
 - [W3C Data Privacy Vocabulary (DPV)](https://w3id.org/dpv/pd) - Personal data categories
 - [Schema.org](https://schema.org) - Web semantic types
-- [Open Semantic Interchange (OSI)](https://github.com/open-semantic-interchange/OSI) - Semantic layer interoperability
 - [UN/CEFACT](https://vocabulary.uncefact.org/) - Trade and transport vocabulary
 
 ## License

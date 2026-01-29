@@ -299,7 +299,7 @@ Date and time related fields.
 
 #### 4.1 Event Timestamp ⚡
 - **Purpose**: When a specific event/action/transition occurred, basis logical time series, externally given
-- **Examples**: `published`, `completed`, `created_at`, `selected_offer_placed_at`
+- **Examples**: `published`, `completed`, `created_at`, `offer_placed_at`
 - **Specifiers**: Standard event class: primary (timeline/calendar spine), created, modified, activated, deactivated, deleted, resolution (year, quarter, month,  .. ns), timezone, no-gregorian calendar (eg Hijri)
 - **Profiling**: Time range, gaps, temporal distribution, recency
 - **Quality Rules**:
@@ -367,7 +367,7 @@ Location and spatial data.
 
 #### 5.1 Coordinate (Latitude) 🌐
 - **Purpose**: Latitude component of geographic point
-- **Examples**: `first_loading_lat_dlv`, `last_unloading_lat_dlv`
+- **Examples**: `loading_lat_dlv`, `unloading_lat_dlv`
 - **Profiling**: Coordinate distribution, validity, precision
 - **Quality Rules**:
   - Not missing
@@ -382,7 +382,7 @@ Location and spatial data.
 
 #### 5.2 Coordinate (Longitude) 🌐
 - **Purpose**: Longitude component of geographic point
-- **Examples**: `first_loading_lon_dlv`, `last_unloading_lon_dlv`
+- **Examples**: `loading_lon_dlv`, `unloading_lon_dlv`
 - **Profiling**: Coordinate distribution, validity, precision
 - **Quality Rules**:
   - Not missing
@@ -396,7 +396,7 @@ Location and spatial data.
 
 #### 5.3 Address Text
 - **Purpose**: Street address component, usually with house number
-- **Examples**: `first_loading_street`, `last_unloading_street_dlv`
+- **Examples**: `loading_street`, `unloading_street_dlv`
 - **Profiling**: Completeness, format patterns, geocoding coverage
 - **Quality Rules**:
   - Non-empty when address is required
@@ -417,7 +417,7 @@ Location and spatial data.
 
 #### 5.4 City Name
 - **Purpose**: City/municipality name
-- **Examples**: `first_loading_city`, `last_unloading_city`
+- **Examples**: `loading_city`, `unloading_city`
 - **Profiling**: City distribution, spelling variants
 - **Quality Rules**:
   - Geocoding success
@@ -430,7 +430,7 @@ Location and spatial data.
 #### 5.5 Postal Code
 - **Purpose**: Postal/ZIP code
 - **Specifiers**: country code, namespace
-- **Examples**: `first_loading_zip`, `last_unloading_zip_dlv`
+- **Examples**: `loading_zip`, `unloading_zip_dlv`
 - **Derivates**: most countries havehierarchical post code system, enabling to use 1-2-3 first chars as general region identifier 
 - **Profiling**: Format by country, coverage, invalid codes
 - **Quality Rules**:
@@ -509,7 +509,8 @@ Quantitative measurements with units.
 
 #### 6.2 Distance Metric 🛣️
 - **Purpose**: Linear distance measurement
-- **Examples**: `distance_aerial_first_to_last_km`, `rtv_distance_km`
+- **Examples**: `distance_aerial_km`, `rtv_distance_km`
+- **Specifier**: distance type: SFD (shortest feasible route distance), aerial
 - **Derivates**: translations to other distance units
 - **Profiling**: Range, outliers, zero values, distribution
 - **Quality Rules**:
@@ -537,7 +538,7 @@ Quantitative measurements with units.
 - **Unit**: Days, minutes, seconds, hours (specify)
 
 #### 6.4 Volume Metric 📦
-- **Purpose**: 3D space/cargo volume
+- **Purpose**: 3D space (e.g. cargo) volume
 - **Examples**: `transport_volume_cbm`
 - **Profiling**: Distribution, capacity utilization, zero values
 - **Quality Rules**:
@@ -550,7 +551,7 @@ Quantitative measurements with units.
 
 #### 6.5 Weight Metric ⚖️
 - **Purpose**: Mass/weight measurement
-- **Examples**: `transport_weight_kg`, `rtv_transport_weight_kg`
+- **Examples**: `transport_weight_kg`, `order_weight_kg`
 - **Profiling**: Distribution, overload detection, zero values
 - **Quality Rules**:
   - Must be >= 0
@@ -574,7 +575,7 @@ Quantitative measurements with units.
 
 #### 6.7 Environmental/Emissions Metric 🌿
 - **Purpose**: Environmental impact measurements
-- **Examples**: `rtv_emissions_default_total_wtw_co2_t`, `rtv_emissions_fuel_based_accumulated_consumption_l`
+- **Examples**: `emissions_default_total_wtw_co2_t`, `emissions_fuel_based_accumulated_consumption_l`
 - **Specifiers**: measure content, e.g. total emissions, specific emissions, noise emissions etc
 - **Profiling**: Distribution, zero emissions, calculation method correlation
 - **Quality Rules**:
@@ -917,36 +918,28 @@ Values are primarily human-readable, specific sample values are preferred but th
 
 ```json
 {
-  "type": "📈 Numeric Measurement", // mandatory, minimal
-  "subtype": "Weight Metric ⚖️",
+  "type": "Numeric Measurement", // mandatory, minimal
+  "subtype": "Weight Metric",
   "description": "Cargo weight in kilograms",
   "specifications": //specific details depending on type
-  { "unit": "kg", // for numeric data
-    "currency": "EUR", // for financial data
-    "timezone": "embedded", // for timestamps, embedded - offset added to values, or 'Europe/Berlin' for fixed
-    "time_resolution": "ms", // for timestamps, can be month, day, hour, .. ms, ns
-    "language": "EN" // 
+  { "unit": "kg" // for numeric data
   },
   "aggregations": ["SUM", "AVG", "MIN", "MAX"],
   "values":{ // value expectations (as soft rules)
     "min": ">0",
     "max": "<=100000",
-    "enum": ["LTL","FTL","FCL"], // list of expected values
-    "other_enum": true, // allow also others values not in enum 
-    "nulls": true, //ok to have null value
-    "cardinality": "unique"
-  },
-  "standard": "ISO 3166-1 alpha-2"
+    "nulls": true //ok to have null value
+  }
 }
 ```
 
 ### Example Annotations
 
 ```yaml
-transport_baselayer: # table name
+transports: # table name
   transport_id:
     db_type: INT64
-    semantic_type: "🆔 IDENTIFIER"
+    semantic_type: identifier.primary
     specifiers: 
       - numeric
       - incremental
@@ -964,8 +957,7 @@ transport_baselayer: # table name
 
   first_loading_lat_dlv:
     db_type: FLOAT
-    semantic_type: "📍🌐 GEOGRAPHIC"
-    subtype: "latitude"
+    semantic_type: geographic.latitude
     description: "First loading latitude in decimal degrees"
     unit: "decimal_degrees"
     nullable: true
@@ -986,8 +978,7 @@ transport_baselayer: # table name
 
   route_distance_km:
     db_type: INT64
-    semantic_type: "📊🛣️ NUMERIC_MEASUREMENT"
-    subtype: "distance"
+    semantic_type: numeric.distance
     description: "Total routed transport distance"
     unit: "kilometers"
     nullable: true
@@ -1015,10 +1006,10 @@ transport_baselayer: # table name
 
   selected_offer_price_eur:
     db_type: FLOAT
-    semantic_type: "💰 FINANCIAL"
-    subtype: "price, selected_value"
+    semantic_type: numeric.currency_amount
     description: "Selected offer price in EUR"
-    unit: "EUR"
+    properties:
+      currency: EUR
     nullable: true
     cardinality: high
     related_fields: 
@@ -1045,8 +1036,7 @@ transport_baselayer: # table name
 
   is_contracted:
     db_type: BOOL
-    semantic_type: "✅ BOOLEAN"
-    subtype: "classification_flag, business_rule"
+    semantic_type: boolean.classification_flag
     description: "Whether the load is contracted"
     nullable: false
     cardinality: "low (2-3 values)"
@@ -1067,8 +1057,7 @@ transport_baselayer: # table name
 
   first_loading_start_ts_dlv:
     db_type: TIMESTAMP
-    semantic_type: "📅🕐 TEMPORAL"
-    subtype: "time_window_start, event"
+    semantic_type: temporal.time_window
     description: "Start timestamp for first loading"
     nullable: true
     cardinality: high
