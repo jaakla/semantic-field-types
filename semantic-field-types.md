@@ -918,10 +918,9 @@ Values are primarily human-readable, specific sample values are preferred but th
 
 ```json
 {
-  "type": "Numeric Measurement", // mandatory, minimal
-  "subtype": "Weight Metric",
+  "type": numeric.weight, // minimal
   "description": "Cargo weight in kilograms",
-  "specifications": //specific details depending on type
+  "properties": //specific details depending on type
   { "unit": "kg" // for numeric data
   },
   "aggregations": ["SUM", "AVG", "MIN", "MAX"],
