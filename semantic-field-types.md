@@ -494,7 +494,11 @@ Location and spatial data.
 
 Quantitative measurements with defined units. All subtypes inherit common properties from the base definition below, then add type-specific rules.
 
-#### Base Properties (inherited by all subtypes)
+There is countless number of possible dimensions which can be used to measure something. The short list here is just a boilerplate/basic selection from the transportation domain, it is expected to be extended to specific application domains.  
+
+#### Base Properties
+
+Inherited by all subtypes:
 
 | Property | Common Definition |
 |----------|-------------------|
@@ -509,6 +513,7 @@ Quantitative measurements with defined units. All subtypes inherit common proper
 - Density coherence: `weight / volume` should yield realistic densities
 - Emissions intensity: `emissions / (distance × weight)` within expected ranges
 - Capacity utilization: `actual / maximum` ratios should be 0-100%
+- Transformations in the data lineage: e.g. is speed in km/h or mph really properly calculated correctly from distance and time units.
 
 ---
 
@@ -678,6 +683,9 @@ Calculated or assigned values representing relative standing, position, or order
 ### 8. FINANCIAL Types 💰
 
 Monetary values representing prices, costs, revenues, and financial transactions. Distinguished from physical measurements by currency denomination, potential for negative values, and financial accounting rules.
+
+Similar to the numeric measurements there is countless number of possible aspects which could be given to various financial numbers: e.g. various ways to define useful meaning to revenue, profit, cost, taxes, balances, discounts etc. Each of them has own data nuances and could be defined as its own type. The short list here is just a template, it is expected to be extended to specific application domains.  
+
 
 #### Base Properties
 
