@@ -21,16 +21,18 @@ See the full specification: **[semantic-field-types.md](./semantic-field-types.m
 
 | Category | Description | Examples |
 |----------|-------------|----------|
-| **1. Identifiers 🏷️** | Uniquely identify entities | `transport_id`, `order_number` |
-| **2. Categorical 🗂️** | Classification and grouping | `status`, `country_code`, `transport_type` |
-| **3. Boolean ✅** | True/false flags | `is_active`, `has_trailer` |
-| **4. Temporal 🕒** | Dates, times, durations | `created_at`, `delivery_date`, `transit_time` |
-| **5. Geographic 🌍** | Location data | `latitude`, `longitude`, `h3_index` |
-| **6. Numeric Measurements 📊** | Quantifiable values | `distance_km`, `weight_kg`, `price_eur` |
-| **8. Text 📝** | Textual content | `notes`, `description`, `url` |
-| **9. Entity & Business Data 🏢** | Legal entities (non-PII) | `company_name`, `vat_number` |
-| **10. Personal Data (PII) 🙍** | Individual person data | `driver_name`, `email`, `phone` |
-| **11. Metadata ⚙️** | Technical/system data | `source_file`, `partition_key` |
+| **1. Identifiers 🆔** | Uniquely identify entities | `transport_id`, `order_number` |
+| **2. Categorical 📝** | Classification and grouping | `status`, `vehicle_type`, `decline_reason` |
+| **3. Boolean ✅** | True/false flags | `is_active`, `is_contracted`, `gets_email` |
+| **4. Temporal 📅** | Dates, times, durations | `created_at`, `delivery_deadline`, `loading_start_ts` |
+| **5. Geographic 📍** | Location data | `latitude`, `longitude`, `h3_index`, `country_code` |
+| **6. Numeric Measurements 📊** | Quantifiable values | `distance_km`, `weight_kg`, `temperature_c` |
+| **7. Score/Index/Ordinal 📈** | Ratings, ranks, sequences | `performance_score`, `priority_level`, `stop_sequence` |
+| **8. Financial 💰** | Monetary values | `price_eur`, `invoice_amount`, `budget` |
+| **9. Text 📄** | Textual content | `notes`, `description`, `url` |
+| **10. Entity & Business Data 🏢** | Legal entities (non-PII) | `company_name`, `vat_number`, `company_address` |
+| **11. Personal Data (PII) 👤🔒** | Individual person data | `driver_name`, `personal_email`, `phone` |
+| **12. Metadata 🗂️** | Technical/system data | `source_file`, `partition_key`, `revision` |
 
 ### Example Usage
 
@@ -54,29 +56,30 @@ columns:
 
   - name: driver_name
     meta:
-      semantic_type: personal.natural_person_name
+      semantic_type: personal.name
       pii_classification: pii
+      data_protection: masked
 
   - name: total_cost_eur
     meta:
-    semantic_type: numeric.currency_amount
+      semantic_type: financial.price
       properties:
         currency: EUR
 ```
 
 In analytical database gold/mart table, as field comment:
 ```json
-{"type":"numeric.weight","description":"Cargo weight in kilograms","properties":{"unit":"kg"},"aggregations":["SUM","AVG","MIN","MAX"],"values":{"min":">0","max":"<=100000","nulls":true}}
+{"type":"numeric.weight","description":"Cargo weight in kilograms","properties":{"unit":"kg"},"aggregations":["SUM","AVG","MIN","MAX"],"values":{"min":">=0","max":"<=40000","nulls":true}}
 ```
 
 
 ## Core Principles
 
-1. **Overlapping Dimensions**: Fields can have multiple semantic aspects
+1. **Multiple Dimensions**: Fields can have multiple semantic aspects (e.g., a field can be both a temporal event and a deadline)
 2. **Inheritance**: Subtypes inherit properties from parent types
 3. **Composability**: Semantic markers combine to describe complex field meanings
 4. **Pragmatism**: Focus on actionable metadata that drives tooling
-5. **Flexibility**: Everything in the semantic definition is optional and can be extended ad-hoc for specific data and project needs.
+5. **Flexibility**: Everything in the semantic definition is optional and can be extended for specific data and project needs
 
 ## Contributing
 
@@ -88,12 +91,25 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 
 ## Related Standards
 
-This taxonomy is designed to complement existing standards:
+This taxonomy is designed to complement existing standards. Future versions may align more closely with:
 
-- [Open Semantic Interchange (OSI)](https://github.com/open-semantic-interchange/OSI) - Semantic layer interoperability
-- [W3C Data Privacy Vocabulary (DPV)](https://w3id.org/dpv/pd) - Personal data categories
-- [Schema.org](https://schema.org) - Web semantic types
-- [UN/CEFACT](https://vocabulary.uncefact.org/) - Trade and transport vocabulary
+**Privacy & Data Protection**
+- [W3C Data Privacy Vocabulary (DPV) 2.0](https://w3id.org/dpv/pd) - Machine-readable vocabulary for personal data categories
+- GDPR Article 9 Special Categories - Legal basis for sensitive PII classification
+
+**Semantic Web & Metadata**
+- [Schema.org](https://schema.org) - Web semantic types (827 entity types, 1528 properties)
+- Dublin Core (ISO 15836) - Core metadata elements
+- ISO/IEC 11179 - International standard for metadata registries
+
+**Domain-Specific (Logistics/Transport)**
+- [UN/CEFACT](https://vocabulary.uncefact.org/) - Semantic vocabulary for international trade and transport
+- GS1 Global Data Model - Supply chain identifiers (GTIN, GLN, SSCC)
+- UN/LOCODE - Authoritative location codes
+
+**Data Quality Tools**
+- Great Expectations - Semantic type-based profiling
+- Soda Core - Data profiling with check suggestions
 
 ## License
 
@@ -101,6 +117,6 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## Version
 
-Current version: **0.1** (Initial pre-release)
+Current version: **0.1** - Initial pre-release (January 2026)
 
 See [CHANGELOG.md](./CHANGELOG.md) for version history.
