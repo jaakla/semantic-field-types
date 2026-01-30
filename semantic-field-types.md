@@ -312,8 +312,8 @@ Date and time related fields.
 - **Lineage**: Event sequences must be consistent across tables
 
 #### 4.2 Deadline/Target Timestamp 🕐
-- **Purpose**: When something is expected/due to happen
-- **Examples**: `offer_deadline_datetime`, `acknowledgement_required_until`
+- **Purpose**: When something is expected/due to or estimated to happen
+- **Examples**: `offer_deadline_datetime`, `acknowledgement_required_until`, `delivery_eta`
 - **Specifiers**: Resolution (year, quarter, month,  .. ns), timezone
 - **Profiling**: Past vs future deadlines, deadline miss rate
 - **Quality Rules**:
@@ -492,134 +492,240 @@ Location and spatial data.
 
 ### 6. NUMERIC MEASUREMENT Types 📊
 
-Quantitative measurements with units.
+Quantitative measurements with defined units. All subtypes inherit common properties from the base definition below, then add type-specific rules.
+
+#### Base Properties (inherited by all subtypes)
+
+| Property | Common Definition |
+|----------|-------------------|
+| **Quality Rules** | Must be >= 0 (except eg. Temperature, which allows negatives); within realistic range for domain |
+| **Valid Aggregations** | SUM, AVG, MIN, MAX, PERCENTILE |
+| **Profiling** | Distribution analysis, outlier detection, zero value frequency, range validation |
+| **Visualization** | Histograms, box plots, distribution charts, time series trends |
+| **Required Specifiers** | Unit (required), Precision/Resolution (optional), Expected Range (optional) |
+
+**Cross-Metric Validation Rules** (when multiple measurement types present):
+- Speed coherence: `distance / duration` should yield realistic speeds
+- Density coherence: `weight / volume` should yield realistic densities
+- Emissions intensity: `emissions / (distance × weight)` within expected ranges
+- Capacity utilization: `actual / maximum` ratios should be 0-100%
+
+---
 
 #### 6.1 Count/Quantity 🔢
-- **Purpose**: Discrete count of items/events
+- **Purpose**: Discrete count of items/events, natural number
 - **Examples**: `deliveries_n`, `offers_n`, `hazardous_deliveries_n`
-- **Profiling**: Distribution, zero counts, outliers
-- **Quality Rules**:
-  - Must be >= 0 (non-negative)
+- **Unit**: Dimensionless (count)
+- **Type-Specific Rules**:
   - Integer values only
-  - Check for unrealistic outliers
-- **Valid Aggregations**: SUM, AVG, MIN, MAX, COUNT
-- **Visualization**: Histograms, bar charts
-- **Analysis**: Totals, averages, distribution analysis
-- **Unit**: Count (dimensionless)
+  - Range expectaion >=0 or >=1
+  - SUM is always valid (counts are additive)
+- **Analysis**: Totals, frequency analysis, event counting
 
 #### 6.2 Distance Metric 🛣️
 - **Purpose**: Linear distance measurement
 - **Examples**: `distance_aerial_km`, `rtv_distance_km`
-- **Specifier**: distance type: SFD (shortest feasible route distance), aerial
-- **Derivates**: translations to other distance units
-- **Profiling**: Range, outliers, zero values, distribution
-- **Quality Rules**:
-  - Must be >= 0
-  - Realistic maximum (e.g., <50,000 km for road transport)
-  - Aerial distance <= actual route distance
-- **Valid Aggregations**: SUM, AVG, MIN, MAX, PERCENTILE
-- **Visualization**: Histograms, distance bands
-- **Analysis**: Total distance, average haul, distance-based segmentation, Pareto analysis
-- **Unit**: Kilometers (or specified: m, nm, mi)
-- **Lineage**: Calculated distances should match source coordinates
+- **Unit Category**: Length (km, m, mi, nm)
+- **Specifiers**: Distance type (SFD/shortest feasible route, aerial, actual driven)
+- **Type-Specific Rules**:
+  - Aerial distance <= route distance
+  - Realistic maximum ~50,000 km for road transport
+- **Derivates**: Unit conversions (km ↔ mi ↔ nm)
+- **Cross-Validation**: Speed = Distance / Duration
+- **Lineage**: Calculated distances should trace to source coordinates
 
 #### 6.3 Duration Metric ⏱️
 - **Purpose**: Time duration/elapsed time
 - **Examples**: `transport_duration_minutes`, `route_time_s`
-- **Profiling**: Duration distribution, outliers, zero durations
-- **Derivates**: translations to other period units, conversion to human-friendly forms like 'Day:Hour:Min'
-- **Quality Rules**:
-  - Must be >= 0
-  - Reasonable maximum (e.g., <10,000 minutes)
-  - Consistent with distance (speed checks)
-- **Valid Aggregations**: SUM, AVG, MIN, MAX, PERCENTILE
-- **Visualization**: Duration histograms, box plots
-- **Analysis**: Total time, average duration, efficiency metrics
-- **Unit**: Days, minutes, seconds, hours (specify)
+- **Unit Category**: Time (seconds, minutes, hours, days)
+- **Type-Specific Rules**:
+  - Realistic maximum depends on context (~10,000 min for transport)
+- **Derivates**: Unit conversions, human-friendly formats (D:HH:MM:SS)
+- **Cross-Validation**: Consistent with distance (speed checks)
 
 #### 6.4 Volume Metric 📦
-- **Purpose**: 3D space (e.g. cargo) volume
+- **Purpose**: 3D space measurement (cargo capacity)
 - **Examples**: `transport_volume_cbm`
-- **Profiling**: Distribution, capacity utilization, zero values
-- **Quality Rules**:
-  - Must be >= 0
-  - Realistic maximum (e.g., <150 CBM for trucks)
-- **Valid Aggregations**: SUM, AVG, MIN, MAX
-- **Visualization**: Volume distribution, capacity charts
-- **Analysis**: Total volume, utilization rates
-- **Unit**: Cubic meters (CBM)
+- **Unit Category**: Volume (CBM, liters, cubic feet)
+- **Type-Specific Rules**:
+  - Realistic maximum ~150 CBM for trucks
+- **Cross-Validation**: Density = Weight / Volume
+- **Analysis**: Capacity utilization rates
 
 #### 6.5 Weight Metric ⚖️
 - **Purpose**: Mass/weight measurement
 - **Examples**: `transport_weight_kg`, `order_weight_kg`
-- **Profiling**: Distribution, overload detection, zero values
-- **Quality Rules**:
-  - Must be >= 0
-  - Realistic maximum (e.g., <40,000 kg for single truckload)
-  - Consistent with volume (density checks)
-- **Valid Aggregations**: SUM, AVG, MIN, MAX
-- **Visualization**: Weight distribution, load charts
-- **Analysis**: Total tonnage, weight-based pricing
-- **Unit**: Kilograms (KG), Metric Tonnes, LBS - must be given as Specifier
-- **Lineage**: RTV weights should align with order weights
+- **Unit Category**: Mass (kg, tonnes, lbs) - must specify
+- **Type-Specific Rules**:
+  - Realistic maximum ~40,000 kg for single truckload
+- **Cross-Validation**: Density = Weight / Volume
+- **Lineage**: Downstream weights should align with upstream order weights
 
 #### 6.6 Dimension/Length Metric 📏
-- **Purpose**: Linear dimension measurement
-- **Examples**: `transport_loading_meter_m`
-- **Profiling**: Distribution, capacity checks
-- **Quality Rules**:
-  - Must be >= 0
-  - Realistic maximum (<100)
-- **Valid Aggregations**: SUM, AVG, MIN, MAX
-- **Unit**: Meters (M)
+- **Purpose**: Linear dimension of objects (not travel distance)
+- **Examples**: `transport_loading_meter_m`, `pallet_height_m`
+- **Unit Category**: Length (m, cm, ft, in)
+- **Type-Specific Rules**:
+  - Realistic maximum ~100m for cargo dimensions
+- **Analysis**: Capacity planning, equipment matching
 
 #### 6.7 Environmental/Emissions Metric 🌿
 - **Purpose**: Environmental impact measurements
-- **Examples**: `emissions_default_total_wtw_co2_t`, `emissions_fuel_based_accumulated_consumption_l`
-- **Specifiers**: measure content, e.g. total emissions, specific emissions, noise emissions etc
-- **Profiling**: Distribution, zero emissions, calculation method correlation
-- **Quality Rules**:
-  - Must be >= 0
-  - Reasonable ranges for transport type
-  - Validate calculation method consistency
-- **Valid Aggregations**: SUM, AVG, PERCENTILE
-- **Visualization**: Emissions trends, method comparison
-- **Analysis**: Total carbon footprint, efficiency scoring
-- **Unit**: Depending on metric: Tonnes (CO2e), Liters (fuel), grammes of CO2e per tonne-km
+- **Examples**: `emissions_default_total_wtw_co2_t`, `fuel_consumption_l`
+- **Unit Category**: Various (tonnes CO2e, liters fuel, g CO2e/tonne-km)
+- **Specifiers**: Measure content (total, specific, WTW/TTW), calculation method
+- **Type-Specific Rules**:
+  - Validate calculation method consistency across records
+  - Ranges depend on transport mode and method
+- **Cross-Validation**: Emissions intensity = Emissions / (Distance × Weight)
+- **Analysis**: Carbon footprint, efficiency scoring, method comparison
 
-#### 6.8 Score/Index 📈
-- **Purpose**: Calculated quality/performance score
-- **Examples**: `rtv_visibility_index`
-- **Profiling**: Score distribution, correlation with outcomes
-- **Quality Rules**:
-  - Within expected range (e.g., 0-100 or 0-1)
-  - Validate score calculation
-- **Valid Aggregations**: AVG, MIN, MAX, PERCENTILE
-- **Visualization**: Score distribution, trends over time
-- **Analysis**: Performance benchmarking, data or business service/product quality monitoring
-
-#### 6.9 Price/Amount 💰
-- **Purpose**: Monetary values and pricing
-- **Examples**: `basic_price_eur`, `selected_offer_price_eur`, `min_offer_price_eur`
-- **Specifiers**: Currency (EUR, USD etc), tax type (eg VAT)
-- **Profiling**: Price distribution, outliers, zero prices, pricing patterns
-- **Quality Rules**:
-  - Usually >= 0 (unless credits/refunds allowed)
-  - Check for unrealistic values
-  - Validate min <= selected <= max (when applicable)
-  - Currency consistency
-- **Valid Aggregations**: SUM, AVG, MIN, MAX, PERCENTILE
-- **Visualization**: Price histograms, box plots, pricing trends
-- **Analysis**: Total revenue, average price, price optimization
-- **Lineage**: Calculated prices should trace to component prices
+#### 6.8 Temperature Metric 🌡️
+- **Purpose**: Thermal measurement (ambient, cargo, equipment)
+- **Examples**: `cargo_temperature_c`, `ambient_temp_f`, `setpoint_temperature_c`, `min_temperature_c`, `max_temperature_c`
+- **Unit Category**: Temperature (°C, °F, K) - must specify
+- **Type-Specific Rules**:
+  - May be negative (unlike most physical measurements)
+  - Realistic range depends on context:
+    - Ambient: -50°C to +60°C
+    - Cold chain: -30°C to +25°C
+    - Frozen goods: -25°C to -18°C
+  - Validate min <= actual <= max when range fields exist
+- **Derivates**: Unit conversions (°C ↔ °F ↔ K) - note: non-linear conversion
+- **Valid Aggregations**: AVG, MIN, MAX, PERCENTILE (SUM usually invalid)
+- **Cross-Validation**: Temperature should match product requirements (cold chain compliance)
+- **Analysis**: Cold chain monitoring, excursion detection, compliance reporting
 
 ---
 
-### 8. TEXT Types 📄
+### 7. SCORE/INDEX/ORDINAL Types 📈
+
+Calculated or assigned values representing relative standing, position, or order. Unlike physical measurements, these are typically dimensionless and non-additive.
+
+#### Base Properties
+
+| Property | Definition |
+|----------|------------|
+| **Quality Rules** | Within expected bounds; validate calculation/assignment logic |
+| **Valid Aggregations** | MIN, MAX, PERCENTILE (SUM typically invalid - values don't add meaningfully) |
+| **Profiling** | Distribution analysis, correlation with outcomes, position/gap analysis |
+| **Visualization** | Distributions, gauges, trend lines, ranking charts, ordered lists |
+| **Required Specifiers** | Scale bounds or range (where applicable) |
+
+---
+
+#### Scores (bounded, derived metrics)
+
+#### 7.1 Performance Score
+- **Purpose**: Measures operational quality or efficiency
+- **Examples**: `rtv_visibility_index`, `on_time_delivery_score`, `carrier_performance_rating`
+- **Scale**: Typically 0-100 or 0-1
+- **Valid Aggregations**: AVG, MIN, MAX, PERCENTILE
+- **Analysis**: Performance benchmarking, SLA compliance, trend monitoring
+
+#### 7.2 Quality Rating
+- **Purpose**: Subjective or calculated quality assessment
+- **Examples**: `carrier_rating`, `service_quality_score`, `data_completeness_score`
+- **Scale**: Often 1-5 stars or 0-100
+- **Valid Aggregations**: AVG, MIN, MAX, PERCENTILE
+- **Analysis**: Quality monitoring, provider comparison, improvement tracking
+
+#### 7.3 Composite Index
+- **Purpose**: Aggregated indicator combining multiple factors
+- **Examples**: `sustainability_index`, `risk_score`, `reliability_index`
+- **Specifiers**: Component weights, calculation methodology
+- **Valid Aggregations**: AVG, MIN, MAX, PERCENTILE
+- **Analysis**: Multi-dimensional assessment, weighted comparisons
+
+---
+
+#### Ordinals (position-based values)
+
+#### 7.4 Rank/Position
+- **Purpose**: Relative position based on sorting by some criterion
+- **Examples**: `carrier_rank`, `price_rank`, `offer_position`, `bid_ranking`
+- **Scale**: 1 to N (lower typically = better/first)
+- **Quality Rules**:
+  - Integer values >= 1
+  - Ties may exist (same rank for multiple records)
+  - Max rank <= count of ranked items
+- **Valid Aggregations**: MIN, MAX, COUNT (SUM/AVG usually meaningless)
+- **Visualization**: Rank distributions, winner identification, position histograms
+- **Analysis**: Top-N analysis, position changes over time, tie detection
+
+#### 7.5 Sequence/Order Number
+- **Purpose**: Ordinal position in an ordered collection
+- **Examples**: `stop_sequence`, `line_item_order`, `leg_number`, `step_number`
+- **Scale**: 1 to N (or 0 to N-1)
+- **Quality Rules**:
+  - Integer values
+  - Should be consecutive within group (no gaps, unless allowed)
+  - Unique within scope (e.g., per order, per route)
+- **Valid Aggregations**: MIN, MAX, COUNT (SUM invalid)
+- **Profiling**: Gap detection, sequence completeness, max sequence length
+- **Analysis**: Ordering validation, sequence integrity checks
+
+#### 7.6 Priority/Urgency Level
+- **Purpose**: Assigned importance or processing order
+- **Examples**: `priority_level`, `urgency`, `processing_priority`, `alert_severity`
+- **Scale**: Often 1-5 or 1-10 (semantics vary: 1 may be highest or lowest)
+- **Specifiers**: Priority direction (1=highest or 1=lowest)
+- **Valid Aggregations**: MIN, MAX, MODE, COUNT by level
+- **Analysis**: Priority distribution, escalation patterns, workload by priority
+
+---
+
+### 8. FINANCIAL Types 💰
+
+Monetary values representing prices, costs, revenues, and financial transactions. Distinguished from physical measurements by currency denomination, potential for negative values, and financial accounting rules.
+
+#### Base Properties
+
+| Property | Definition |
+|----------|------------|
+| **Quality Rules** | Usually >= 0 (negatives allowed for credits/refunds); realistic range for domain |
+| **Valid Aggregations** | SUM, AVG, MIN, MAX, PERCENTILE |
+| **Profiling** | Distribution, outliers, zero values, pricing patterns, currency consistency |
+| **Visualization** | Price histograms, revenue trends, box plots, pricing waterfalls |
+| **Required Specifiers** | Currency (ISO 4217 required), tax treatment (optional) |
+
+**Financial Validation Rules**:
+- Currency must be consistent within calculation chains
+- When comparative fields exist: min <= selected <= max
+- Calculated totals should trace to component line items
+
+#### 8.1 Price/Unit Cost
+- **Purpose**: Cost or price per unit of goods/services
+- **Examples**: `basic_price_eur`, `selected_offer_price_eur`, `cost_per_km_eur`
+- **Type-Specific Rules**:
+  - Typically >= 0
+  - Validate against market ranges
+- **Analysis**: Pricing optimization, cost benchmarking, rate comparison
+
+#### 8.2 Transaction Amount
+- **Purpose**: Total monetary value of a transaction
+- **Examples**: `invoice_amount_eur`, `payment_amount_usd`, `refund_amount_eur`
+- **Type-Specific Rules**:
+  - May be negative (credits, refunds, adjustments)
+  - Should reconcile with line items
+- **Lineage**: Must trace to source prices and quantities
+- **Analysis**: Revenue totals, cash flow, reconciliation
+
+#### 8.3 Budget/Limit
+- **Purpose**: Financial thresholds or allocated amounts
+- **Examples**: `transport_budget_eur`, `credit_limit_eur`, `max_spend_eur`
+- **Type-Specific Rules**:
+  - Typically >= 0
+  - Compare actual vs. budget for variance analysis
+- **Analysis**: Budget utilization, variance reporting, forecasting
+
+---
+
+### 9. TEXT Types 📄
 
 General textual data with various purposes.
 
-#### 8.1 Free Text/Notes
+#### 9.1 Free Text/Notes
 - **Purpose**: Unstructured human-readable text
 - **Specifiers**: Language: e.g. EN, unspecified, auto-detectable
 - **Examples**: Comments, notes, descriptions (if present)
@@ -632,7 +738,7 @@ General textual data with various purposes.
 - **Visualization**: Word clouds, length distribution
 - **Analysis**: Sentiment analysis, keyword extraction
 
-#### 8.2 Structured Text/Chain Data 🔄
+#### 9.2 Structured Text/Chain Data 🔄
 - **Purpose**: Serialized structured data (comma-separated, JSON, etc.)
 - **Examples**: `freight_forwarding_company_assignment_chain`, `freight_forwarding_transport_id_chain`
 - **Specifiers**: expected structure (e.g. json-schema)
@@ -645,7 +751,7 @@ General textual data with various purposes.
 - **Visualization**: Chain length distribution, flow diagrams
 - **Analysis**: Chain complexity, multi-hop patterns
 
-#### 8.3 URL/Link 🔗
+#### 9.3 URL/Link 🔗
 - **Purpose**: Web address or resource locator
 - **Examples**: `company_url`, `website`, `logo_url`, `api_endpoint`, `file_location`
 - **Specifiers**: Protocol (http, https, ftp, binary data), resource type (website, API, image, pdf file)
@@ -661,11 +767,11 @@ General textual data with various purposes.
 
 ---
 
-### 9. ENTITY & BUSINESS DATA Types 🏢
+### 10. ENTITY & BUSINESS DATA Types 🏢
 
 Data about legal entities, organizations, and business operations. Generally **non-PII** as this is publicly available business information.
 
-#### 9.1 Legal Entity Name
+#### 10.1 Legal Entity Name
 - **Purpose**: Name of a legal entity (company, organization, location, product)
 - **PII Classification**: Non-PII (publicly available business information)
 - **Examples**: `company_name`, `shipper_name`, `carrier_name`, `location_name`, `organization_name`, `trading_name`
@@ -682,7 +788,7 @@ Data about legal entities, organizations, and business operations. Generally **n
 - **Analysis**: Name standardization, duplicate detection, test data identification, company registry matching
 - **Related Subtypes**: May have latinized/transliterated variant field (e.g., `latin_name`)
 
-#### 9.2 External Registration Number 🔢
+#### 10.2 External Registration Number 🔢
 - **Purpose**: Official registration/identification numbers from external authorities for legal entities
 - **PII Classification**: Non-PII (public business registration)
 - **Examples**: `ogrn` (Russian company ID), `vat_number`, `duns_number`, `tax_id`, `eori_number`
@@ -696,7 +802,7 @@ Data about legal entities, organizations, and business operations. Generally **n
 - **Valid Aggregations**: COUNT, COUNT DISTINCT
 - **Analysis**: Registration coverage, format compliance, country distribution
 
-#### 9.3 Business Address 🏠
+#### 10.3 Business Address 🏠
 - **Purpose**: Physical address of a business entity or operational location
 - **PII Classification**: Non-PII (publicly available business information)
 - **Examples**: `company_address`, `warehouse_address`, `office_address`, `registered_address`, `loading_address`
@@ -713,7 +819,7 @@ Data about legal entities, organizations, and business operations. Generally **n
 - **Analysis**: Location optimization, geographic coverage, address standardization
 - **Related Types**: Links to Geospatial coordinates (latitude/longitude)
 
-#### 9.4 Business Email 📧
+#### 10.4 Business Email 📧
 - **Purpose**: Generic business email addresses (not associated with specific individuals)
 - **PII Classification**: Non-PII
 - **Examples**: `info_email`, `support_email`, `sales_email`, `company_email`
@@ -727,7 +833,7 @@ Data about legal entities, organizations, and business operations. Generally **n
 - **Visualization**: Domain frequency charts
 - **Analysis**: Email domain concentration, role coverage
 
-#### 9.5 Business Phone 📞
+#### 10.5 Business Phone 📞
 - **Purpose**: Business switchboard and department phone numbers
 - **PII Classification**: Non-PII
 - **Examples**: `company_phone`, `office_phone`, `support_hotline`, `fax`
@@ -743,7 +849,7 @@ Data about legal entities, organizations, and business operations. Generally **n
 
 ---
 
-### 10. PERSONAL DATA Types (PII) 👤🔒
+### 11. PERSONAL DATA Types (PII) 👤🔒
 
 Data directly or indirectly identifying natural persons. **All types in this category are PII** and require appropriate data protection measures including masking, encryption, access control, and compliance with privacy regulations (GDPR, CCPA, etc.).
 
@@ -756,7 +862,7 @@ Data directly or indirectly identifying natural persons. **All types in this cat
 > - Retention policies per regulations
 > - Right to erasure compliance
 
-#### 10.1 Natural Person Name 👤
+#### 11.1 Natural Person Name 👤
 - **Purpose**: Name of an individual person (first name, last name, full name)
 - **PII Classification**: PII - requires masking, encryption, or access control
 - **Examples**: `driver_name`, `contact_person`, `first_name`, `last_name`, `full_name`, `dispatcher_name`
@@ -777,7 +883,7 @@ Data directly or indirectly identifying natural persons. **All types in this cat
 - **Analysis**: Limited to aggregated statistics; full name analysis requires privacy approval
 - **Related Subtypes**: May have pseudonymized variant field (e.g., `driver_id` instead of `driver_name`)
 
-#### 10.2 Personal Email Address 📧
+#### 11.2 Personal Email Address 📧
 - **Purpose**: Electronic mail address associated with a natural person
 - **PII Classification**: PII - requires protection
 - **Examples**: `driver_email`, `dispatcher_email`, `contact_email`, `user_email`
@@ -796,7 +902,7 @@ Data directly or indirectly identifying natural persons. **All types in this cat
 - **Visualization**: Masked display, domain distribution (aggregated)
 - **Analysis**: Limited to aggregated statistics
 
-#### 10.3 Personal Phone Number 📱
+#### 11.3 Personal Phone Number 📱
 - **Purpose**: Telephone contact number associated with a natural person
 - **PII Classification**: PII - requires protection
 - **Examples**: `driver_phone`, `mobile`, `contact_phone`, `emergency_contact`, `personal_mobile`
@@ -815,7 +921,7 @@ Data directly or indirectly identifying natural persons. **All types in this cat
 - **Visualization**: Country distribution (aggregated), masked display
 - **Analysis**: Geographic distribution (aggregated only)
 
-#### 10.4 Personal Address 🏠
+#### 11.4 Personal Address 🏠
 - **Purpose**: Physical address associated with a natural person (home, delivery address)
 - **PII Classification**: PII - requires protection and access control
 - **Examples**: `driver_address`, `home_address`, `billing_address`, `delivery_address` (when personal)
@@ -835,7 +941,7 @@ Data directly or indirectly identifying natural persons. **All types in this cat
 - **Visualization**: Country/region heatmaps only (no precise locations)
 - **Analysis**: Aggregated geographic distribution; precise analysis requires privacy approval
 
-#### 10.5 Personal Identification Document 🪪
+#### 11.5 Personal Identification Document 🪪
 - **Purpose**: Government-issued identification numbers for natural persons
 - **PII Classification**: **Sensitive PII** - highest protection level required
 - **Examples**: `passport_number`, `national_id`, `driver_license_number`, `social_security_number`
@@ -859,11 +965,11 @@ Data directly or indirectly identifying natural persons. **All types in this cat
 
 ---
 
-### 11. METADATA Types 🗂️
+### 12. METADATA Types 🗂️
 
 Technical and system metadata.
 
-#### 11.1 Source/System Metadata 📁
+#### 12.1 Source/System Metadata 📁
 - **Purpose**: Technical information about data source
 - **Examples**: `source_filename`, `ingested`
 - **Profiling**: Source distribution, ingestion completeness
@@ -872,7 +978,7 @@ Technical and system metadata.
 - **Visualization**: Source contribution charts
 - **Analysis**: Source quality comparison, ingestion monitoring
 
-#### 11.2 Partition Key 🗄️
+#### 12.2 Partition Key 🗄️
 - **Purpose**: Physical table partitioning key
 - **Examples**: `p_is_contracted`, `p_completed_month`
 - **Profiling**: Partition distribution, skew detection
@@ -883,7 +989,7 @@ Technical and system metadata.
 - **Visualization**: Partition size distribution
 - **Analysis**: Query performance optimization, partition pruning
 
-#### 11.3 Version/Revision Number 🔢
+#### 12.3 Version/Revision Number 🔢
 - **Purpose**: Record version for optimistic locking or change tracking
 - **Examples**: `revision`, `version`, `row_version`, `etag`
 - **Profiling**: Version distribution, update frequency
@@ -895,7 +1001,7 @@ Technical and system metadata.
 - **Analysis**: Update frequency, data churn analysis
 - **Usage**: Optimistic concurrency control, CDC (Change Data Capture)
 
-#### 11.4 Data Origin Flag 📥
+#### 12.4 Data Origin Flag 📥
 - **Purpose**: Indicates the source system or method of data creation
 - **Examples**: `from_crm`, `is_api_created`, `source_system`, `creation_method`
 - **Profiling**: Origin distribution, quality by origin
