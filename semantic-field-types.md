@@ -58,8 +58,8 @@ This taxonomy is currently a pragmatic, internal classification. Future versions
 * **Soda Core** - Data profiling with check suggestions; potential integration point.
 
 #### Future Actions
-1. Add namespace/URI support for machine-readable type definitions
-2. Publish as JSON-LD or RDF for tool integration
+1. Add namespace/URI reference system for machine-readable type definitions
+2. Publish as MCP or RDF for tool integration
 3. Map types to W3C DPV categories for privacy automation
 4. Align transport entities with UN/CEFACT vocabulary
 5. Consider formal registration per ISO/IEC 11179
