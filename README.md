@@ -93,6 +93,8 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 
 This taxonomy is designed to complement existing standards. Future versions may align more closely with:
 
+- [Open Semantic Interchange](https://github.com/open-semantic-interchange/OSI) - working proposal for a standard for semantic model data interchange
+
 **Privacy & Data Protection**
 - [W3C Data Privacy Vocabulary (DPV) 2.0](https://w3id.org/dpv/pd) - Machine-readable vocabulary for personal data categories
 - GDPR Article 9 Special Categories - Legal basis for sensitive PII classification
