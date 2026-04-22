@@ -34,6 +34,78 @@ See the full specification: **[semantic-field-types.md](./semantic-field-types.m
 | **11. Personal Data (PII) 👤🔒** | Individual person data | `driver_name`, `personal_email`, `phone` |
 | **12. Metadata 🗂️** | Technical/system data | `source_file`, `partition_key`, `revision` |
 
+## Install as AI Skill
+
+[`skills/annotate-fields.md`](./skills/annotate-fields.md) is a self-contained prompt file that embeds the full taxonomy. Install it into your AI tool of choice with one command — no dependencies, no runtime, just a markdown file.
+
+Once installed, ask your AI assistant to annotate fields:
+> *"Annotate these fields with semantic types: transport_id BIGINT, driver_name VARCHAR, distance_km NUMERIC, created_at TIMESTAMP"*
+
+It will output annotated dbt YAML and JSON column comments with PII flags, quality rules, and valid aggregations.
+
+---
+
+### Claude Code
+
+Adds an `/annotate-fields` slash command:
+
+```bash
+# Project-level (shared with your team via git)
+mkdir -p .claude/commands && curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md -o .claude/commands/annotate-fields.md
+
+# User-global (available in all your projects)
+mkdir -p ~/.claude/commands && curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md -o ~/.claude/commands/annotate-fields.md
+```
+
+Use: `/annotate-fields CREATE TABLE logistics.transports (...)`
+
+---
+
+### Cursor
+
+Adds a rule applied when working on SQL, YAML, and dbt files:
+
+```bash
+mkdir -p .cursor/rules && curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md -o .cursor/rules/annotate-fields.mdc
+```
+
+---
+
+### GitHub Copilot
+
+Adds semantic type awareness to Copilot across the repository:
+
+```bash
+mkdir -p .github && curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md >> .github/copilot-instructions.md
+```
+
+---
+
+### Windsurf
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md >> .windsurfrules
+```
+
+---
+
+### Aider
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md -o semantic-field-types-skill.md
+aider --read semantic-field-types-skill.md
+```
+
+---
+
+### Any other AI tool (ChatGPT, Gemini, Codex, etc.)
+
+Paste the raw file URL into your system prompt or context window:
+
+```
+https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md
+```
+
 ### Example Usage
 
 In AI prompts:
