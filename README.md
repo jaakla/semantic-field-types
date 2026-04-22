@@ -34,6 +34,34 @@ See the full specification: **[semantic-field-types.md](./semantic-field-types.m
 | **11. Personal Data (PII) 👤🔒** | Individual person data | `driver_name`, `personal_email`, `phone` |
 | **12. Metadata 🗂️** | Technical/system data | `source_file`, `partition_key`, `revision` |
 
+## Install as Claude Code Skill
+
+Install the `/annotate-fields` slash command into Claude Code with one line:
+
+```bash
+# Project-level (shared with your team via git)
+mkdir -p .claude/commands && curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md -o .claude/commands/annotate-fields.md
+
+# User-global (available in all your projects)
+mkdir -p ~/.claude/commands && curl -fsSL https://raw.githubusercontent.com/jaakla/semantic-field-types/master/skills/annotate-fields.md -o ~/.claude/commands/annotate-fields.md
+```
+
+Then use it directly in Claude Code:
+
+```
+/annotate-fields CREATE TABLE logistics.transports (
+  transport_id   BIGINT,
+  carrier_id     BIGINT,
+  driver_name    VARCHAR,
+  distance_km    NUMERIC,
+  created_at     TIMESTAMP
+)
+```
+
+Claude will output annotated dbt YAML and JSON column comments for each field, including PII flags, quality rules, and valid aggregations.
+
+The skill file is at [`skills/annotate-fields.md`](./skills/annotate-fields.md) — it embeds the full taxonomy so it works offline and without any additional dependencies.
+
 ### Example Usage
 
 In AI prompts:
