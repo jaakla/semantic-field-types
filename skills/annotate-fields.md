@@ -158,15 +158,17 @@ Analyze the provided database table schema, field list, or CREATE TABLE statemen
 
 ---
 
-## Task
+## Instructions
 
-For each field in `$ARGUMENTS`:
+When asked to annotate, classify, or document data fields, apply the taxonomy above:
 
-1. **Select** the most specific matching semantic type from the taxonomy above.
+1. **Select** the most specific matching semantic type for each field.
 2. **Add `pii_classification`** (`pii` or `sensitive_pii`) for any `personal.*` type.
 3. **Add `properties.unit`** for `numeric.*` and `financial.*` fields.
 4. **Write a concise description** (one sentence, business-meaningful).
-5. **Output** in the requested format. If none specified, produce **both** dbt YAML and JSON column-comment formats.
+5. **Output** in the format requested by the user. If not specified, produce **both** dbt YAML and JSON column-comment formats.
+
+If a field is ambiguous or could match multiple types, pick the primary semantic intent and note the alternative.
 
 ### dbt YAML output
 ```yaml
@@ -191,4 +193,4 @@ columns:
 {"type":"numeric.weight","description":"Gross cargo weight in kilograms.","properties":{"unit":"kg"},"aggregations":["SUM","AVG","MIN","MAX"],"values":{"min":">0","max":"<=40000","nulls":true}}
 ```
 
-If the input is ambiguous or a field could match multiple types, pick the primary semantic intent and note the alternative in a comment.
+$ARGUMENTS
